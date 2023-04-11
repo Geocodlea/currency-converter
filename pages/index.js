@@ -1,13 +1,15 @@
-import styles from '@/styles/Home.module.css'
-import Head from 'next/head'
-
-import { useState } from 'react';
+import styles from "@/styles/Home.module.css";
+import Head from "next/head";
+import { useState } from "react";
+import "/node_modules/flag-icons/css/flag-icons.min.css";
 
 function CurrencyConverter() {
-  const [sourceCurrency, setSourceCurrency] = useState('EUR');
-  const [targetCurrency, setTargetCurrency] = useState('RON');
+  const [sourceCurrency, setSourceCurrency] = useState("EUR");
+  const [targetCurrency, setTargetCurrency] = useState("RON");
   const [amount, setAmount] = useState(1);
   const [conversionRate, setConversionRate] = useState();
+  const [sourceCurrencyFlag, setSourceCurrencyFlag] = useState("eu");
+  const [targetCurrencyFlag, setTargetCurrencyFlag] = useState("ro");
 
   async function handleConvert() {
     const response = await fetch(
@@ -20,11 +22,16 @@ function CurrencyConverter() {
 
   function handleSourceCurrencyChange(event) {
     setSourceCurrency(event.target.value);
-
+    setSourceCurrencyFlag(
+      event.target.options[event.target.selectedIndex].getAttribute("flag")
+    );
   }
 
   function handleTargetCurrencyChange(event) {
     setTargetCurrency(event.target.value);
+    setTargetCurrencyFlag(
+      event.target.options[event.target.selectedIndex].getAttribute("flag")
+    );
   }
 
   function handleAmountChange(event) {
@@ -39,54 +46,108 @@ function CurrencyConverter() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <div className={styles.main}>
-      <h2>Currency Converter</h2>
-      <div>
-        <label>Source Currency: </label>
-        <select value={sourceCurrency} onChange={handleSourceCurrencyChange}>
-          {currencies.map((currency) => (
-            <option key={currency.code} value={currency.code}>
-              {currency.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>Target Currency: </label>
-        <select value={targetCurrency} onChange={handleTargetCurrencyChange}>
-          {currencies.map((currency) => (
-            <option key={currency.code} value={currency.code}>
-              {currency.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>Amount: </label>
-        <input type="number" value={amount} onChange={handleAmountChange} />
-      </div>
-      <div>
-        <button onClick={handleConvert}>Convert</button>
-      </div>
-      {conversionRate && (
-        <p>
-          {amount} {sourceCurrency} = {conversionRate * amount} {targetCurrency}
+      <div className={styles.container}>
+        <h1 className={styles.title}>Currency Converter</h1>
+        <p className={styles.description}>
+          This is a simple currency converter app built with React and Next.js.
+          Enter the amount you want to convert, select the source and target
+          currencies, and the conversion rate will be displayed below. The rates
+          are updated in real-time using data from the Open Exchange Rates API.
         </p>
-      )}
-    </div>
+        <div className={styles.currencyRow}>
+          <div className={styles.currencyColumn}>
+            <label className={styles.label}>From:</label>
+            <div className={styles.selectWrapper}>
+              <select
+                className={styles.select}
+                value={sourceCurrency}
+                onChange={handleSourceCurrencyChange}
+              >
+                {currencies.map((currency) => (
+                  <option
+                    key={currency.code}
+                    value={currency.code}
+                    flag={currency.flag}
+                  >
+                    {currency.name} ({currency.code})
+                  </option>
+                ))}
+              </select>
+              <div className={styles.selectArrow}></div>
+            </div>
+          </div>
+          <div className={styles.currencyColumn}>
+            <label className={styles.label}>To:</label>
+            <div className={styles.selectWrapper}>
+              <select
+                className={styles.select}
+                value={targetCurrency}
+                onChange={handleTargetCurrencyChange}
+              >
+                {currencies.map((currency) => (
+                  <option
+                    key={currency.code}
+                    value={currency.code}
+                    flag={currency.flag}
+                  >
+                    {currency.name} ({currency.code})
+                  </option>
+                ))}
+              </select>
+              <div className={styles.selectArrow}></div>
+            </div>
+          </div>
+        </div>
+        <div className={styles.amountRow}>
+          <div className={styles.amountColumn}>
+            <label className={styles.label}>Amount:</label>
+            <div className={styles.amountWrapper}>
+              <input
+                className={styles.amountInput}
+                type="number"
+                value={amount}
+                onChange={handleAmountChange}
+              />
+              <div className={styles.flag}>
+                <span className={`fi fi-${sourceCurrencyFlag}`}></span>
+              </div>
+              <div className={styles.currencyCode}>{sourceCurrency}</div>
+            </div>
+          </div>
+          <div className={styles.amountColumn}>
+            <div className={styles.label}>&nbsp;</div>
+            <div className={styles.amountWrapper}>
+              <input
+                className={styles.amountInput}
+                type="number"
+                value={
+                  conversionRate ? (amount * conversionRate).toFixed(4) : ""
+                }
+                disabled
+              />
+              <div className={styles.flag}>
+                <span className={`fi fi-${targetCurrencyFlag}`}></span>
+              </div>
+              <div className={styles.currencyCode}>{targetCurrency}</div>
+            </div>
+          </div>
+        </div>
+        <button className={styles.convertButton} onClick={handleConvert}>
+          Convert
+        </button>
+      </div>
     </>
   );
 }
 
 const currencies = [
-  { code: 'RON', name: 'Romanian Leu' },
-  { code: 'USD', name: 'US Dollar' },
-  { code: 'EUR', name: 'Euro' },
-  { code: 'GBP', name: 'British Pound' },
-  { code: 'JPY', name: 'Japanese Yen' },
-  { code: 'CAD', name: 'Canadian Dollar' },
-  { code: 'CHF', name: 'Swiss Franc' },
+  { code: "RON", name: "Romanian Leu", flag: "ro" },
+  { code: "USD", name: "US Dollar", flag: "us" },
+  { code: "EUR", name: "Euro", flag: "eu" },
+  { code: "GBP", name: "British Pound", flag: "gb" },
+  { code: "JPY", name: "Japanese Yen", flag: "jp" },
+  { code: "CAD", name: "Canadian Dollar", flag: "ca" },
+  { code: "CHF", name: "Swiss Franc", flag: "ch" },
 ];
 
 export default CurrencyConverter;
