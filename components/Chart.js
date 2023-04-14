@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
+import Model from "../components/Model";
 
 function todayDate() {
   let today = new Date();
@@ -42,7 +43,6 @@ function oneYearAgoDate() {
 
   let formattedDate =
     oneYearAgoYear + "-" + oneYearAgoMonth + "-" + oneYearAgoDay;
-  console.log(formattedDate);
   return formattedDate;
 }
 
@@ -103,7 +103,12 @@ function RatesChart({ sourceCurrency, targetCurrency }) {
     };
   }, [exchangeData]);
 
-  return <canvas ref={canvasRef} width={600} height={400}></canvas>;
+  return (
+    <>
+      <canvas ref={canvasRef} width={600} height={400}></canvas>
+      <Model exchangeData={exchangeData} />
+    </>
+  );
 }
 
 export default RatesChart;
