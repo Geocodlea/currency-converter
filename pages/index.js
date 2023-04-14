@@ -2,6 +2,7 @@ import styles from "@/styles/Home.module.css";
 import Head from "next/head";
 import { useState } from "react";
 import "/node_modules/flag-icons/css/flag-icons.min.css";
+import Chart from "../components/Chart";
 
 function CurrencyConverter() {
   const [sourceCurrency, setSourceCurrency] = useState("EUR");
@@ -135,6 +136,12 @@ function CurrencyConverter() {
         <button className={styles.convertButton} onClick={handleConvert}>
           Convert
         </button>
+        <hr className={styles.hr} />
+        <h1 className={styles.title}>Rates Chart</h1>
+        <Chart
+          sourceCurrency={sourceCurrency}
+          targetCurrency={targetCurrency}
+        />
       </div>
     </>
   );
