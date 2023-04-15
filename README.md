@@ -13,3 +13,5 @@ It also provides a prediction with TensorFlow.js, training a model based on last
 > Choose a source currency and a target currency from the dropdowns, and the amount to be converted, than press the convert button.
 > The Rates Chart shows the exchange rates for the chosen currencies, for 1 year.
 > Pressing the predict button, will train a model and make a prediction for the next day, based on the last year of data.
+
+### You can check the online example: [here](https://currency-converter-eight-tawny.vercel.app/)
