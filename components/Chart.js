@@ -49,22 +49,31 @@ function oneYearAgoDate() {
 function RatesChart({ sourceCurrency, targetCurrency }) {
   const [exchangeData, setExchangeData] = useState(null);
   const canvasRef = useRef(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetch(
       `https://api.exchangerate.host/timeseries?start_date=${oneYearAgoDate()}&end_date=${todayDate()}&base=${sourceCurrency}&symbols=${targetCurrency}`
     )
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
       .then((data) => {
         const rates = Object.entries(data.rates).map(([date, rates]) => {
           return rates[`${targetCurrency}`];
         });
         setExchangeData(rates);
       })
-      .catch((error) => console.error(error));
+      .catch((error) => setErrorMessage(error.message));
   }, [sourceCurrency, targetCurrency]);
 
   useEffect(() => {
+    if (errorMessage) {
+      return;
+    }
     const ctx = canvasRef.current.getContext("2d");
     const chart = new Chart(ctx, {
       type: "line",
@@ -105,8 +114,14 @@ function RatesChart({ sourceCurrency, targetCurrency }) {
 
   return (
     <>
-      <canvas ref={canvasRef} width={600} height={400}></canvas>
-      <Model exchangeData={exchangeData} />
+      {errorMessage ? (
+        <div style={{ color: "red" }}>There was an error: {errorMessage}</div>
+      ) : (
+        <>
+          <canvas ref={canvasRef} width={600} height={400}></canvas>
+          <Model exchangeData={exchangeData} />
+        </>
+      )}
     </>
   );
 }

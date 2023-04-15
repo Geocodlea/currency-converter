@@ -11,14 +11,22 @@ function CurrencyConverter() {
   const [conversionRate, setConversionRate] = useState();
   const [sourceCurrencyFlag, setSourceCurrencyFlag] = useState("eu");
   const [targetCurrencyFlag, setTargetCurrencyFlag] = useState("ro");
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleConvert() {
-    const response = await fetch(
-      `https://api.exchangerate.host/latest?base=${sourceCurrency}&symbols=${targetCurrency}`
-    );
-    const data = await response.json();
-    const rate = data.rates[targetCurrency];
-    setConversionRate(rate);
+    try {
+      const response = await fetch(
+        `https://api.exchangerate.host/latest?base=${sourceCurrency}&symbols=${targetCurrency}`
+      );
+      if (!response.ok) {
+        throw new Error("API request failed");
+      }
+      const data = await response.json();
+      const rate = data.rates[targetCurrency];
+      setConversionRate(rate);
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
   }
 
   function handleSourceCurrencyChange(event) {
@@ -136,6 +144,9 @@ function CurrencyConverter() {
         <button className={styles.convertButton} onClick={handleConvert}>
           Convert
         </button>
+        {errorMessage && (
+          <div style={{ color: "red" }}>There was an error: {errorMessage}</div>
+        )}
         <hr className={styles.hr} />
         <h1 className={styles.title}>Rates Chart</h1>
         <Chart

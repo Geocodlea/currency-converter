@@ -4,6 +4,7 @@ import styles from "@/styles/Home.module.css";
 
 function ExchangeRatePredictor({ exchangeData }) {
   const [nextDayValue, setNextDayValue] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function trainModel(data) {
     // Split the data into input and output sequences
@@ -27,12 +28,17 @@ function ExchangeRatePredictor({ exchangeData }) {
     // Compile the model
     model.compile({ loss: "meanSquaredError", optimizer: optimizer });
 
-    await model.fit(tf.tensor2d(inputSequence), tf.tensor1d(outputSequence), {
-      epochs: 30,
-      callbacks: tfvis.show.fitCallbacks({ name: "Training Performance" }, [
-        "loss",
-      ]),
-    });
+    try {
+      await model.fit(tf.tensor2d(inputSequence), tf.tensor1d(outputSequence), {
+        epochs: 30,
+        callbacks: tfvis.show.fitCallbacks({ name: "Training Performance" }, [
+          "loss",
+        ]),
+      });
+    } catch (error) {
+      setErrorMessage(error.message);
+      return;
+    }
 
     // Dispose of the tensors created in this function
     tf.dispose([inputSequence, outputSequence]);
@@ -42,19 +48,26 @@ function ExchangeRatePredictor({ exchangeData }) {
 
   async function predictNextDayValue(model, data) {
     // Use the model to predict the next value
-    const input = tf.tensor2d([data.slice(0, data.length / 2)]);
-    const prediction = model.predict(input);
-
-    // Dispose of the tensor created in this function
-    input.dispose();
-
-    return prediction.dataSync()[0];
+    try {
+      const input = tf.tensor2d([data.slice(0, data.length / 2)]);
+      const prediction = model.predict(input);
+      input.dispose();
+      return prediction.dataSync()[0];
+    } catch (error) {
+      setErrorMessage(error.message);
+      return;
+    }
   }
 
   async function handlePredict() {
-    const model = await trainModel(exchangeData);
-    const nextDayValue = await predictNextDayValue(model, exchangeData);
-    setNextDayValue(nextDayValue);
+    try {
+      const model = await trainModel(exchangeData);
+      const nextDayValue = await predictNextDayValue(model, exchangeData);
+      setNextDayValue(nextDayValue);
+    } catch (error) {
+      setErrorMessage(error.message);
+      setNextDayValue("Error");
+    }
   }
 
   return (
@@ -67,8 +80,18 @@ function ExchangeRatePredictor({ exchangeData }) {
           last year data. It is just a fun AI prediction, as it is almost
           impossible to predict exchange rates.
           <br />
-          The predicted exchange rate for the next day is{" "}
-          <mark className={styles.prediction}>{nextDayValue.toFixed(4)}</mark>
+          {isNaN(nextDayValue) ? (
+            <div style={{ color: "red" }}>
+              There was an error: {errorMessage}
+            </div>
+          ) : (
+            <>
+              The predicted exchange rate for the next day is:{" "}
+              <mark className={styles.prediction}>
+                {nextDayValue.toFixed(4)}
+              </mark>
+            </>
+          )}
         </p>
       ) : (
         <>
