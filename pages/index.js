@@ -16,13 +16,13 @@ function CurrencyConverter() {
   async function handleConvert() {
     try {
       const response = await fetch(
-        `https://api.exchangerate.host/latest?base=${sourceCurrency}&symbols=${targetCurrency}`
+        `https://api.exchangerate.host/convert?from=${sourceCurrency}&to=${targetCurrency}&amount=${amount}&access_key=${process.env.NEXT_PUBLIC_API_KEY}`
       );
       if (!response.ok) {
         throw new Error("API request failed");
       }
       const data = await response.json();
-      const rate = data.rates[targetCurrency];
+      const rate = data.result;
       setConversionRate(rate);
     } catch (error) {
       setErrorMessage(error.message);

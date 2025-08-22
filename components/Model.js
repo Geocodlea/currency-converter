@@ -6,31 +6,53 @@ function ExchangeRatePredictor({ exchangeData }) {
   const [nextDayValue, setNextDayValue] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const windowSize = 10; // number of days used to predict the next day
+
+  function normalizeData(data) {
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const normalized = data.map((d) => (d - min) / (max - min));
+    return { normalized, min, max };
+  }
+
+  function denormalize(value, min, max) {
+    return value * (max - min) + min;
+  }
+
   async function trainModel(data) {
-    // Split the data into input and output sequences
+    const { normalized, min, max } = normalizeData(data);
+
     const inputSequence = [];
     const outputSequence = [];
-    const numInputSequences = data.length / 2;
-    for (let i = 0; i < numInputSequences; i++) {
-      inputSequence.push(data.slice(i, i + numInputSequences));
-      outputSequence.push(data[i + numInputSequences]);
+    for (let i = 0; i < normalized.length - windowSize; i++) {
+      inputSequence.push(normalized.slice(i, i + windowSize));
+      outputSequence.push(normalized[i + windowSize]);
     }
 
-    // Define the model architecture
+    const xs = tf.tensor2d(inputSequence);
+    const ys = tf.tensor2d(outputSequence, [outputSequence.length, 1]);
+
     const model = tf.sequential();
-    model.add(tf.layers.dense({ units: 183, inputShape: [numInputSequences] }));
-    model.add(tf.layers.dense({ units: 90, activation: "relu" }));
+    model.add(
+      tf.layers.dense({
+        units: 32,
+        inputShape: [windowSize],
+        activation: "relu",
+      })
+    );
+    model.add(tf.layers.dense({ units: 16, activation: "relu" }));
     model.add(tf.layers.dense({ units: 1 }));
 
-    const learningRate = 0.00001;
-    const optimizer = tf.train.adam(learningRate);
-
-    // Compile the model
-    model.compile({ loss: "meanSquaredError", optimizer: optimizer });
+    const optimizer = tf.train.adam(0.01);
+    model.compile({ loss: "meanSquaredError", optimizer });
 
     try {
-      await model.fit(tf.tensor2d(inputSequence), tf.tensor1d(outputSequence), {
+      // Dynamically import tfvis to show training graph
+      const tfvis = await import("@tensorflow/tfjs-vis");
+
+      await model.fit(xs, ys, {
         epochs: 30,
+        verbose: 0,
         callbacks: tfvis.show.fitCallbacks({ name: "Training Performance" }, [
           "loss",
         ]),
@@ -40,30 +62,28 @@ function ExchangeRatePredictor({ exchangeData }) {
       return;
     }
 
-    // Dispose of the tensors created in this function
-    tf.dispose([inputSequence, outputSequence]);
-
-    return model;
+    tf.dispose([xs, ys]);
+    return { model, min, max, normalized };
   }
 
-  async function predictNextDayValue(model, data) {
-    // Use the model to predict the next value
-    try {
-      const input = tf.tensor2d([data.slice(0, data.length / 2)]);
-      const prediction = model.predict(input);
-      input.dispose();
-      return prediction.dataSync()[0];
-    } catch (error) {
-      setErrorMessage(error.message);
-      return;
-    }
+  async function predictNextDayValue(modelData) {
+    const { model, min, max, normalized } = modelData;
+    const lastWindow = normalized.slice(-windowSize);
+    const input = tf.tensor2d([lastWindow]);
+    const prediction = model.predict(input);
+    const predictedValue = prediction.dataSync()[0];
+    input.dispose();
+    prediction.dispose();
+    return denormalize(predictedValue, min, max);
   }
 
   async function handlePredict() {
     try {
-      const model = await trainModel(exchangeData);
-      const nextDayValue = await predictNextDayValue(model, exchangeData);
-      setNextDayValue(nextDayValue);
+      setErrorMessage("");
+      setNextDayValue(null);
+      const modelData = await trainModel(exchangeData);
+      const nextValue = await predictNextDayValue(modelData);
+      setNextDayValue(nextValue);
     } catch (error) {
       setErrorMessage(error.message);
       setNextDayValue("Error");
@@ -97,9 +117,7 @@ function ExchangeRatePredictor({ exchangeData }) {
         <>
           <p className={styles.description}>
             Press the button to train a model to make a prediction based on last
-            year data. You have to wait a little bit for the model to train.
-            While training, you can see the model improving (loss getting close
-            to zero), on the graphs that will appear.
+            year data. You will see the training loss graph appear.
           </p>
           <button className={styles.convertButton} onClick={handlePredict}>
             Predict

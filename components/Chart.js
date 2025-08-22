@@ -53,19 +53,23 @@ function RatesChart({ sourceCurrency, targetCurrency }) {
 
   useEffect(() => {
     fetch(
-      `https://api.exchangerate.host/timeseries?start_date=${oneYearAgoDate()}&end_date=${todayDate()}&base=${sourceCurrency}&symbols=${targetCurrency}`
+      `https://api.exchangerate.host/timeframe?source=${sourceCurrency}&currencies=${targetCurrency}&start_date=${oneYearAgoDate()}&end_date=${todayDate()}&access_key=${
+        process.env.NEXT_PUBLIC_API_KEY
+      }`
     )
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Network response was not ok");
+          throw new Error("API request failed");
         }
+
         return response.json();
       })
       .then((data) => {
-        const rates = Object.entries(data.rates).map(([date, rates]) => {
-          return rates[`${targetCurrency}`];
-        });
+        const rates = Object.values(data.quotes).map(
+          (obj) => obj[`${sourceCurrency}${targetCurrency}`]
+        );
         setExchangeData(rates);
+        setErrorMessage("");
       })
       .catch((error) => setErrorMessage(error.message));
   }, [sourceCurrency, targetCurrency]);
