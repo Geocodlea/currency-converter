@@ -6,9 +6,10 @@ It also provides a prediction with TensorFlow.js, training a model based on last
 
 ## Usage
 
-- For installing dependencies: npm install
-- For running the project: npm run dev
-- Open a web browser and go to localhost:3000
+- For installing dependencies: `npm install`
+- Add a .env.local file in the root of the project with: `NEXT_PUBLIC_API_KEY=YourApiKey`
+- For running the project: `npm run dev`
+- Open a web browser and go to: `localhost:3000`
 
 > Choose a source currency and a target currency from the dropdowns, and the amount to be converted, than press the convert button.
 > The Rates Chart shows the exchange rates for the chosen currencies, for 1 year.
