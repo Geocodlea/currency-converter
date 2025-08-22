@@ -1,6 +1,6 @@
 # Currency Converter
 
-This is a simple currency converter app built with React and Next.js. Enter the amount you want to convert, select the source and target currencies, and the conversion rate will be displayed below. The rates are updated in real-time using data from the Open Exchange Rates API.
+This is a simple currency converter app built with React and Next.js. Enter the amount you want to convert, select the source and target currencies, and the conversion rate will be displayed below. The rates are updated in real-time using data from the exchangerate.host API.
 
 It also provides a prediction with TensorFlow.js, training a model based on last year data. It is just a fun AI prediction, as it is almost impossible to predict exchange rates.
 
